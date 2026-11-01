@@ -1,0 +1,134 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analisar-contrato",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "contrato"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -368,
+        32
+      ],
+      "id": "b7cd12d8-a055-4c2b-b3c2-605d4fca96fc",
+      "name": "Webhook",
+      "webhookId": "dffdd42f-284c-45db-8679-6ed9af66b648"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ (() => {\n  const txt = $json.content.filter(i => i.type === \"text\").map(i => i.text).join(\"\");\n  const r = JSON.parse(txt.replace(/```json|```/g, \"\").trim());\n  const lista = a => (a || []).map(x => \"- \" + x).join(\"\\n\");\n  return [\n    \"ANÁLISE DO CONTRATO\",\n    \"\",\n    \"RESUMO\",\n    r.resumo,\n    \"\",\n    \"PARTES\",\n    \"Contratante: \" + r.partes.contratante,\n    \"Contratada: \" + r.partes.contratada,\n    \"\",\n    \"VALORES\",\n    \"Original: \" + r.valores.original,\n    \"Aditivo: \" + r.valores.aditivo,\n    \"Acréscimo: \" + r.valores.acrescimo,\n    \"\",\n    \"PRAZOS\",\n    \"Início: \" + r.prazos.inicio,\n    \"Vigência: \" + r.prazos.vigencia,\n    \"\",\n    \"OBRIGAÇÕES\",\n    lista(r.obrigacoes),\n    \"\",\n    \"RISCOS\",\n    lista(r.riscos),\n    \"\",\n    \"INFORMAÇÕES AUSENTES\",\n    lista(r.informacoes_ausentes)\n  ].join(\"\\n\");\n})() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        0
+      ],
+      "id": "2003e59a-4e20-4fc8-9891-45d3da4b3b16",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-5-20250929",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-5-20250929"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Analise o contrato e responda SOMENTE com um JSON válido, sem markdown e sem texto fora do JSON, neste formato:\n\n{\n  \"resumo\": \"string\",\n  \"partes\": { \"contratante\": \"string\", \"contratada\": \"string\" },\n  \"valores\": { \"original\": \"string\", \"aditivo\": \"string\", \"acrescimo\": \"string\" },\n  \"prazos\": { \"inicio\": \"string\", \"vigencia\": \"string\" },\n  \"obrigacoes\": [\"string\"],\n  \"riscos\": [\"string\"],\n  \"informacoes_ausentes\": [\"string\"]\n}"
+            }
+          ]
+        },
+        "addAttachments": true,
+        "attachmentsUrls": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8658846c-4c01-4394-850a-0a2b9488bc50",
+      "name": "Message a model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "nvDgy31ic2Xpo1Hj",
+          "name": "Anthropic account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "inputType": "binary",
+        "binaryPropertyName": "=contrato0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        48
+      ],
+      "id": "6a289e9c-c329-4ea3-835e-2adb6d0f5f72",
+      "name": "Upload a file",
+      "credentials": {
+        "anthropicApi": {
+          "id": "nvDgy31ic2Xpo1Hj",
+          "name": "Anthropic account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e654c6ac1adf3e202ff584a84141ef28486dfb1044d3072565938b213ab655e4"
+  }
+}
